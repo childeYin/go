@@ -7,7 +7,10 @@ import(
 
 func request(msg string, conn net.Conn, nickName string) {
 	message := combinationMsg(nickName, msg, conn)
-	parseMsg(message)
+	if message == "" {
+		fmt.Println("请按照【接收人;信息】格式,正确填写:")
+		return 
+	}
 	_, err := conn.Write([]byte(""+message+"\r\n\r\n"))
 	if err != nil {
 		fmt.Println("error_msg_1:",err)
@@ -22,5 +25,5 @@ func response(conn net.Conn) {
 		fmt.Println("error_msg",err)
 		return 
 	}
-	fmt.Println("serverMsg:",string(buf[:serverMsg]))
+	fmt.Println(string(buf[:serverMsg]))
 }

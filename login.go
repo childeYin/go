@@ -2,17 +2,17 @@ package main
 
 import(
     "bufio"
+    // "encoding/json"
     "log"
     "os"
     "net"
     "fmt"
+    // "io/ioutil"
+    // "reflect"
+    "strings"
 )
-type User struct {
-    addr  string
-    nickName string
-}
 
-func login() {
+func login(){
     log.Println("请输入邮箱: ")
     reader     := bufio.NewReader(os.Stdin)
     data, _, _ := reader.ReadLine()
@@ -21,45 +21,65 @@ func login() {
     reader      = bufio.NewReader(os.Stdin)
     data, _, _  = reader.ReadLine()
     password   := string(data)
-    nickName   := getUserByAccount(email, password)
+    // nickName   := getUserByAccount(email, password)
+    nickName := handleLogin(email, password)
     if nickName != "" {
         log.Println("登录成功", nickName, "欢迎回来!")
-        tcpAddr   := "127.0.0.1:8080"
+        handle("auto", nickName)
         for {
-            conn, err := net.Dial("tcp", tcpAddr)
-            if err != nil {
-                log.Println("error msg continue!")
-            }
-            fmt.Print("请输入信息: ")
-            reader     := bufio.NewReader(os.Stdin)
-            data, _, _ := reader.ReadLine()
-            message    := string(data)
-            // log.Println("输入信息为: ", message)
-            request(message, conn, email)
-            response(conn)
+            handle("", nickName)
+            continue
         }
+    } else {
+        log.Println("程序终止!")
     }
-    log.Println("程序终止!")
-
 }
 
-// func getIpArrress(nickName string) string{
-//     addrs, err := net.InterfaceAddrs()
-//     // log.Println("addrs:",addrs)
-//     // log.Println("err:",err)
-//     var ip string
-//     for _, address := range addrs {
-//         // 检查ip地址判断是否回环地址
-//         if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-//             if ipnet.IP.To4() != nil {
-//                 log.Println(ipnet.IP.String())
-//                 ip   := ipnet.IP.String()
-//                 return ip
-//             }
-//         }
-//     }
-//     return ip
-// }
+func handleLogin(email, pwd string) string{
+    var user, ok = userInfo[email]
+    if ok == true {
+        fmt.Println(user.pwd)
+        fmt.Println(pwd)
+        if strings.EqualFold(pwd, user.pwd) == true {
+            fmt.Println(user.nickName)
+            return user.nickName
+        }
+    }
+    return ""
+}
+func readConfig(){
+    // file, e := ioutil.ReadFile("./config.json")
+    // fmt.Printf("%s\n", string(file))
+    // fmt.Println("error:", e)
+    // var jsontype 
+    // json.Unmarshal([]byte(string(file)), &jsontype)
+    // fmt.Println("jsontype:", jsontype)
+}
+
+func handle(message string, nickName string){
+    descAddr := "127.0.0.1:8080"
+    conn, err := net.Dial("tcp", descAddr)
+    // setIps(nickName, conn)
+    // getIps(nickName)
+    if err != nil {
+        log.Println("error msg continue!")
+    }
+    if message == "auto" {
+        message = nickName+";"+"登录成功"
+        go request(message, conn, nickName)
+        go response(conn)
+    } else {
+        fmt.Println("请输入信息: ")
+        reader     := bufio.NewReader(os.Stdin)
+        data, _, _ := reader.ReadLine()
+        message     = string(data)
+        // log.Println("输入信息为: ", message)
+        go request(message, conn, nickName)
+        go response(conn)
+    }
+}
+
 func main() {
     login()
+    // readConfig()
 }

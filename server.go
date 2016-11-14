@@ -15,20 +15,38 @@ func handleResponse(conn net.Conn, ips map[string]net.Conn) {
       fmt.Println("Error reading:", err)
     }
     message := parseMsg(string(buf[:msg]))
-    ips[message.from] = conn
+    ips[message.fromNickName] = conn
     // fmt.Println("map ips:",ips)    
-    sendMsg := message.msg
-    toUser  := message.to
-    sendReponse(toUser, sendMsg, ips )
+    sendMsg      := message.msg
+    toUserName   := message.to
+    fromNickName := message.fromNickName
+
+    sendReponse(fromNickName, toUserName, sendMsg, ips, conn)
 }
 
-func sendReponse(toUser string, sendMsg string, ips map[string]net.Conn){
-    conn  := ips[toUser]
+func sendReponse(fromNickName string, toUserName string, sendMsg string, ips map[string]net.Conn, fromUserConn net.Conn){
+    // conn := getIps(toUserName)
+    // fmt.Println("conn:", conn)
+    // switch conn {
+        // case "":
+        //     fromUserConn.Write([]byte("用户不在线"))
+        //     fmt.Println(toUserName, "用户不在线")
+        // case nil:
+        //     fromUserConn.Write([]byte("用户不在线"))
+        //     fmt.Println(toUserName, "用户不在线")
+        // default :
+        //     fmt.Println("conn:", conn)
+        //     newMessage := "【"+fromNickName+"对你说】: "+ sendMsg  
+        //     conn.Write([]byte(newMessage))
+    // }
+    conn  := ips[toUserName]
     if conn != nil {
       fmt.Println("conn:", conn)
-      conn.Write([]byte(sendMsg))
+      newMessage := "【"+fromNickName+"对你说】: "+ sendMsg  
+      conn.Write([]byte(newMessage))
     } else {
-      fmt.Println("user is not exise")
+       fromUserConn.Write([]byte("用户不在线"))
+       fmt.Println("user is not exise")
     }
 }
 
@@ -40,7 +58,6 @@ func main() {
     if err != nil {
         fmt.Println("server_error_msg_1:",err)    
     }
-    fmt.Println("map ips:",ips)    
     for  {
         conn, err := listener.Accept()
         if err != nil {

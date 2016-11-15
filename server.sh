@@ -8,7 +8,7 @@ fi
 
 case "$1" in
 	"start")  
-		 `server.go messages.go    `;;
+		 `go run server.go messages.go `;;
     "stop")  
 		 `ps -ef | grep 'server.go' | awk '{print $2}' | xargs  kill -9`;;
      * ) 

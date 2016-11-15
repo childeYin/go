@@ -52,8 +52,8 @@ func sendReponse(fromNickName string, toUserName string, sendMsg string, ips map
 
 func main() {
     ips := make(map[string]net.Conn)
-    service := "127.0.0.1:8080"
-    listener, err := net.Listen("tcp", service)
+    // serviceAddr := "127.0.0.1:8080"
+    listener, err := net.Listen("tcp", serviceAddr)
     fmt.Println("listener:", listener)
     if err != nil {
         fmt.Println("server_error_msg_1:",err)    

@@ -11,6 +11,10 @@ type User struct{
 }
 var userInfo map[string]User
 
+const (
+	serviceAddr = "45.78.18.235:8080"
+)
+
 func init(){
 	userInfo = make(map[string]User)
 	userInfo["zhangjun"] = User{"尹少爷", "zhangjun", "123456"}

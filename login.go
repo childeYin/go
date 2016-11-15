@@ -57,8 +57,8 @@ func readConfig(){
 }
 
 func handle(message string, nickName string){
-    descAddr := "127.0.0.1:8080"
-    conn, err := net.Dial("tcp", descAddr)
+    // serviceAddr := "127.0.0.1:8080"
+    conn, err := net.Dial("tcp", serviceAddr)
     // setIps(nickName, conn)
     // getIps(nickName)
     if err != nil {

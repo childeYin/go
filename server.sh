@@ -7,8 +7,10 @@ then
 fi
 
 case "$1" in
+	"build")  
+		 `go build server.go messages.go config.go`;;
 	"start")  
-		 `go run server.go messages.go `;;
+		 `go run server.go messages.go config.go`;;
     "stop")  
 		 `ps -ef | grep 'server.go' | awk '{print $2}' | xargs  kill -9`;;
      * ) 

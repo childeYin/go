@@ -21,3 +21,7 @@ go登录以及保持连接
 	5. 两个client如何交互信息
 
 	目前还有超多问题 但是我又近了一步
+
+运行方式:
+	1. ./login ./server
+	2. ./client.sh ./server.sh

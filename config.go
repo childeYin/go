@@ -12,7 +12,7 @@ type User struct{
 var userInfo map[string]User
 
 const (
-	serviceAddr = "45.78.18.235:8080"
+	serviceAddr = "127.0.0.1:8080"
 )
 
 func init(){

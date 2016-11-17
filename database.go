@@ -3,7 +3,7 @@ package main
 import (
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
-    "log"
+    "fmt"
 )
 
 var db = &sql.DB{}
@@ -13,12 +13,12 @@ func init(){
 }
 
 func getUserByAccount(email, password string) string{
-	log.Println("email:", email)
-	log.Println("password:", password)
+	fmt.Println("email:", email)
+	fmt.Println("password:", password)
 	var login_name string
 	err := db.QueryRow("select login_name from user where email=? and password=?", email, password).Scan(&login_name)
 	if err != nil {
-        log.Println("error_message:", err)
+        fmt.Println("error_message:", err)
         return ""
     }
     return login_name

@@ -3,56 +3,74 @@ package main
 import(
     "net"
     "fmt"
+    "sync"
 )
 
 var ips map[string]net.Conn
 
+// func handleResponse(conn net.Conn, wg *sync.WaitGroup, ips map[string]net.Conn) {
 func handleResponse(conn net.Conn, ips map[string]net.Conn) {
-    fmt.Println("server handleResponse", conn)
-    buf := make([]byte, 1024)
-    msg, err := conn.Read(buf)
-    if err != nil {
-      fmt.Println("Error reading:", err)
-    }
-    message := parseMsg(string(buf[:msg]))
-    ips[message.fromNickName] = conn
-    // fmt.Println("map ips:",ips)    
-    sendMsg      := message.msg
-    toUserName   := message.to
-    fromNickName := message.fromNickName
+    defer conn.Close()
+    for {
+        fmt.Println("server handleResponse", conn)
+        buf := make([]byte, 5000)
+        msg, err := conn.Read(buf)
+        fmt.Println("conn read msg", msg)
+        if err != nil {
+          fmt.Println("Error reading:", err)
+          continue
+        }
+        message := parseMsg(string(buf[:msg]))
+        fmt.Println(message)
+        ips[message.fromNickName] = conn
+        fmt.Println("ips :", ips)
+        sendMsg      := message.msg
+        toUserName   := message.to
+        fromNickName := message.fromNickName
 
-    sendReponse(fromNickName, toUserName, sendMsg, ips, conn)
+        sendReponse(fromNickName, toUserName, sendMsg, ips, conn)
+    }
 }
 
 func sendReponse(fromNickName string, toUserName string, sendMsg string, ips map[string]net.Conn, fromUserConn net.Conn){
-    // conn := getIps(toUserName)
-    // fmt.Println("conn:", conn)
-    // switch conn {
-        // case "":
-        //     fromUserConn.Write([]byte("用户不在线"))
-        //     fmt.Println(toUserName, "用户不在线")
-        // case nil:
-        //     fromUserConn.Write([]byte("用户不在线"))
-        //     fmt.Println(toUserName, "用户不在线")
-        // default :
-        //     fmt.Println("conn:", conn)
-        //     newMessage := "【"+fromNickName+"对你说】: "+ sendMsg  
-        //     conn.Write([]byte(newMessage))
-    // }
     conn  := ips[toUserName]
+    fmt.Println("to User conn", conn, toUserName)
+    fmt.Println(sendMsg)
     if conn != nil {
-      fmt.Println("conn:", conn)
-      newMessage := "【"+fromNickName+"对你说】: "+ sendMsg  
-      conn.Write([]byte(newMessage))
+        fmt.Println("conn:", conn)
+        newMessage := "【"+fromNickName+"对你说】: "+ sendMsg+"\r\n" 
+        fmt.Println(newMessage)
+        _, err  := conn.Write([]byte(newMessage))
+        if err != nil {
+            fmt.Println("error ", err)
+        }
     } else {
-       fromUserConn.Write([]byte("用户不在线"))
-       fmt.Println("user is not exise")
+        fromUserConn.Write([]byte("用户不在线\r\n"))
+        fmt.Println("user is not exise")
     }
 }
 
+func handleResponseToSelf(conn net.Conn, wg *sync.WaitGroup){
+    defer conn.Close()
+    
+    for {
+        fmt.Println("handleResponseToSelf")
+        newMessage := "消息收到了"
+        fmt.Println(newMessage)
+        flag, err  := conn.Write([]byte(newMessage))
+        fmt.Println(flag)
+        if err != nil {
+            fmt.Println("error ", err)
+            continue
+        }
+    }
+}
+
+
 func main() {
+    fmt.Println("listener server")
+
     ips := make(map[string]net.Conn)
-    // serviceAddr := "127.0.0.1:8080"
     listener, err := net.Listen("tcp", serviceAddr)
     fmt.Println("listener:", listener)
     if err != nil {
@@ -60,11 +78,12 @@ func main() {
     }
     for  {
         conn, err := listener.Accept()
+        // defer conn.Close()
         if err != nil {
             fmt.Println("server_error_msg_2:", err)
             continue
         }
-        // fmt.Println("msg:", conn)
+        fmt.Println(ips)
         go handleResponse(conn, ips)
     }
     

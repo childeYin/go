@@ -10,6 +10,8 @@ import(
     // "io/ioutil"
     // "reflect"
     "strings"
+     "runtime"
+    "sync"
 )
 
 func login(){
@@ -23,13 +25,21 @@ func login(){
     password   := string(data)
     // nickName   := getUserByAccount(email, password)
     nickName := handleLogin(email, password)
+    fmt.Println(nickName)
     if nickName != "" {
-        log.Println("登录成功", nickName, "欢迎回来!")
-        handle("auto", nickName)
-        for {
-            handle("", nickName)
-            continue
+        conn, err := net.Dial("tcp", serviceAddr)
+        defer conn.Close()
+        var wg sync.WaitGroup
+        wg.Add(2)
+
+        if err != nil {
+            log.Println("error msg continue! ", err)
         }
+        // fmt.Println(conn)
+        autoRequest(conn, nickName)
+        go requests(conn, &wg, nickName)
+        go responses(conn, &wg)
+        wg.Wait()
     } else {
         log.Println("程序终止!")
     }
@@ -38,8 +48,6 @@ func login(){
 func handleLogin(email, pwd string) string{
     var user, ok = userInfo[email]
     if ok == true {
-        fmt.Println(user.pwd)
-        fmt.Println(pwd)
         if strings.EqualFold(pwd, user.pwd) == true {
             fmt.Println(user.nickName)
             return user.nickName
@@ -47,6 +55,21 @@ func handleLogin(email, pwd string) string{
     }
     return ""
 }
+
+
+func handleMessage(nickName, message string) string{
+    if message == "auto" {
+        message = nickName+";"+"登录成功"
+    } else {
+        fmt.Println("请输入信息: ")
+        reader     := bufio.NewReader(os.Stdin)
+        data, _, _ := reader.ReadLine()
+        message     = string(data)
+    }
+    fmt.Println("输入信息为: ", message)
+    return message
+}
+
 func readConfig(){
     // file, e := ioutil.ReadFile("./config.json")
     // fmt.Printf("%s\n", string(file))
@@ -55,31 +78,10 @@ func readConfig(){
     // json.Unmarshal([]byte(string(file)), &jsontype)
     // fmt.Println("jsontype:", jsontype)
 }
-
-func handle(message string, nickName string){
-    // serviceAddr := "127.0.0.1:8080"
-    conn, err := net.Dial("tcp", serviceAddr)
-    // setIps(nickName, conn)
-    // getIps(nickName)
-    if err != nil {
-        log.Println("error msg continue!")
-    }
-    if message == "auto" {
-        message = nickName+";"+"登录成功"
-        go request(message, conn, nickName)
-        go response(conn)
-    } else {
-        fmt.Println("请输入信息: ")
-        reader     := bufio.NewReader(os.Stdin)
-        data, _, _ := reader.ReadLine()
-        message     = string(data)
-        // log.Println("输入信息为: ", message)
-        go request(message, conn, nickName)
-        go response(conn)
-    }
-}
-
 func main() {
+    runtime.GOMAXPROCS(2)
     login()
+     // go requests(conn, nickName)
+            // go responses(conn)
     // readConfig()
 }

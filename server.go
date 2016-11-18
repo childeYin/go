@@ -8,7 +8,8 @@ import(
     // "io"
 )
 
-var ips = make(map[string]net.Conn)
+var ips       = make(map[string]net.Conn)
+var onlineIps = make(map[string]net.Conn)
 
 func handleResponse(conn net.Conn) {
     defer conn.Close()
@@ -31,6 +32,11 @@ func handleResponse(conn net.Conn) {
         sendMsg      := message.msg
         toUserName   := message.to
         fromNickName := message.fromNickName
+
+        if fromNickName == toUserName {
+            fmt.Println("自己登录")
+            onlineIps[message.fromNickName] = conn
+        }
 
         sendReponse(fromNickName, toUserName, sendMsg, conn)
     }
@@ -82,6 +88,22 @@ func checkNet(wg *sync.WaitGroup){
     }
 }
 
+func sentOnLine(wg *sync.WaitGroup){
+    defer wg.Done()
+    for {
+        // fmt.Println("sentOnLine onlineIps", onlineIps)
+        for name, _ := range onlineIps {
+            for toUserName, conn := range ips {
+                if toUserName != name {
+                    newMessage := "【上线通知】"+name + "上线" 
+                    conn.Write([]byte(newMessage))
+                }
+            }
+            delete(onlineIps, name)
+        }
+    }
+}
+
 func listenResponse(listener net.Listener, wg *sync.WaitGroup){
 // func listenResponse(listener net.Listener){
     defer wg.Done()
@@ -107,7 +129,7 @@ func main() {
     wg.Add(2)
     go listenResponse(listener, &wg)
     // go checkNet(&wg)
-
+    go sentOnLine(&wg)
     wg.Wait()
 }
 

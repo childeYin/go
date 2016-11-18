@@ -95,5 +95,4 @@ func main() {
         os.Exit(1)
     }
     wg.Wait()
-
 }

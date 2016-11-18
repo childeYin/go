@@ -14,30 +14,31 @@ var onlineIps = make(map[string]net.Conn)
 func handleResponse(conn net.Conn) {
     defer conn.Close()
     for {
-    fmt.Println("handleResponse",ips)
-
+        fmt.Println("handleResponse",ips)
         fmt.Println("server handleResponse", conn)
         buf := make([]byte, 5000)
         msg, err := conn.Read(buf)
         if err != nil {
-          fmt.Println("Error reading:", err)
-          continue
+            fmt.Println("Error reading:", err)
+            return 
         }
         message := parseMsg(string(buf[:msg]))
         fmt.Println(message)
+        sendMsg      := message.msg
+        toUserName   := message.to
+        fromNickName := message.fromNickName
+        if fromNickName == toUserName {
+            // fmt.Println("自己登录")
+            checkOnLine(message.fromNickName)
+            onlineIps[message.fromNickName] = conn
+        }
 
         ips[message.fromNickName] = conn
         fmt.Println("handleResponse",ips)
 
-        sendMsg      := message.msg
-        toUserName   := message.to
-        fromNickName := message.fromNickName
+      
 
-        if fromNickName == toUserName {
-            fmt.Println("自己登录")
-            onlineIps[message.fromNickName] = conn
-        }
-
+        
         sendReponse(fromNickName, toUserName, sendMsg, conn)
     }
 }
@@ -88,7 +89,7 @@ func checkNet(wg *sync.WaitGroup){
     }
 }
 
-func sentOnLine(wg *sync.WaitGroup){
+func sendOnLine(wg *sync.WaitGroup){
     defer wg.Done()
     for {
         // fmt.Println("sentOnLine onlineIps", onlineIps)
@@ -104,8 +105,17 @@ func sentOnLine(wg *sync.WaitGroup){
     }
 }
 
+func checkOnLine(fromNickName string){
+    userConn := ips[fromNickName]
+    if ips[fromNickName] != nil {
+        fmt.Println(fromNickName, "已经登录")
+        newMessage := "【下线通知】"+fromNickName+",已经在其他端登录"
+        fmt.Println(newMessage)
+        userConn.Write([]byte(newMessage))
+    }
+}
+
 func listenResponse(listener net.Listener, wg *sync.WaitGroup){
-// func listenResponse(listener net.Listener){
     defer wg.Done()
     for  {
         conn, err := listener.Accept()
@@ -129,7 +139,7 @@ func main() {
     wg.Add(2)
     go listenResponse(listener, &wg)
     // go checkNet(&wg)
-    go sentOnLine(&wg)
+    go sendOnLine(&wg)
     wg.Wait()
 }
 

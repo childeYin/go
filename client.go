@@ -6,6 +6,7 @@ import(
     "os"
     "bufio"
     "sync"
+    "strings"
 
 )
 
@@ -55,16 +56,23 @@ func requests(conn net.Conn, wg *sync.WaitGroup, nickName string) {
 func responses(conn net.Conn, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		buf    := make([]byte, 5000)
+		buf := make([]byte, 5000)
 		serverMsg, err := conn.Read(buf)
 		// fmt.Println(serverMsg)
 		if err != nil {
 			fmt.Println("server response error msg",err)
 			os.Exit(1)
-			//return 
-			// exit(1)
 		}
-		fmt.Println(string(buf[:serverMsg]))
+		receiveMsg := string(buf[:serverMsg])
+		flag 	   := strings.Contains(receiveMsg, "下线通知")
+		if flag {
+			conn.Close()
+			fmt.Println(receiveMsg)
+			os.Exit(1)
+		} else {
+			fmt.Println(receiveMsg)
+		}
+		// fmt.Println(string(buf[:serverMsg]))
 	}
 }
 

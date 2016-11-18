@@ -48,7 +48,6 @@ func requests(conn net.Conn, wg *sync.WaitGroup, nickName string) {
 		if err != nil {
 			fmt.Println("request server error msg:",err)
 			continue 
- 
 		}
 	}
 }
@@ -61,7 +60,9 @@ func responses(conn net.Conn, wg *sync.WaitGroup) {
 		// fmt.Println(serverMsg)
 		if err != nil {
 			fmt.Println("server response error msg",err)
-			continue 
+			os.Exit(1)
+			//return 
+			// exit(1)
 		}
 		fmt.Println(string(buf[:serverMsg]))
 	}

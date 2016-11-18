@@ -2,19 +2,18 @@ package main
 
 import(
     "bufio"
-    // "encoding/json"
     "log"
     "os"
     "net"
     "fmt"
-    // "io/ioutil"
-    // "reflect"
     "strings"
-     "runtime"
+    "runtime"
     "sync"
 )
 
-func login(){
+var conn net.Conn
+
+func login() string {
     log.Println("请输入邮箱: ")
     reader     := bufio.NewReader(os.Stdin)
     data, _, _ := reader.ReadLine()
@@ -27,21 +26,15 @@ func login(){
     nickName := handleLogin(email, password)
     fmt.Println(nickName)
     if nickName != "" {
-        conn, err := net.Dial("tcp", serviceAddr)
-        defer conn.Close()
-        var wg sync.WaitGroup
-        wg.Add(2)
-
-        if err != nil {
-            log.Println("error msg continue! ", err)
+        conn, _ = net.Dial("tcp", serviceAddr)
+        if conn == nil {
+            fmt.Println("服务器繁忙")
+            return ""
         }
-        // fmt.Println(conn)
-        autoRequest(conn, nickName)
-        go requests(conn, &wg, nickName)
-        go responses(conn, &wg)
-        wg.Wait()
+        return nickName
     } else {
         log.Println("程序终止!")
+        return ""
     }
 }
 
@@ -54,6 +47,17 @@ func handleLogin(email, pwd string) string{
         }
     }
     return ""
+}
+
+func handleRequest(nickName string, wg *sync.WaitGroup) {
+    defer conn.Close()
+    autoRequest(conn, nickName)
+    requests(conn, wg, nickName)
+}
+
+func handleResponse(wg *sync.WaitGroup) {
+    defer conn.Close()
+    responses(conn, wg)
 }
 
 
@@ -80,8 +84,16 @@ func readConfig(){
 }
 func main() {
     runtime.GOMAXPROCS(2)
-    login()
-     // go requests(conn, nickName)
-            // go responses(conn)
-    // readConfig()
+    nickName := login()
+    var wg sync.WaitGroup
+    wg.Add(2)
+    if nickName != "" {
+        go handleRequest(nickName, &wg)
+        go handleResponse(&wg)
+    } else {
+       // die()
+        os.Exit(1)
+    }
+    wg.Wait()
+
 }

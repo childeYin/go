@@ -20,8 +20,22 @@ go登录以及保持连接
 
 	5. 两个client如何交互信息
 
+	6. goroutine 没有进行完，main就结束了
+
 	目前还有超多问题 但是我又近了一步
 
+		1.多帐号登录 index out of range 错误；messages.go:15 [ok]
+		2.掉线咋办 
+		3.消息丢失 [ok]
+		4.安装到服务器上
+		5.server没有启动，client登录崩溃[ok]
+		6.一端退出，另一端发送消息，服务器报错
+
+		7.拆 注意模块化 [ok] ****
+		8.在线功能做好了没？怎么检测某用户掉线了？其他用户怎么知道这用户掉线了，如果不知道发消息会怎样？
+
+
+
 运行方式:
-	1. ./login ./server
-	2. ./client.sh ./server.sh
+	1. ./make.sh
+	2. ./login ./server

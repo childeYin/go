@@ -51,7 +51,7 @@ func handleLogin(email, pwd string) string{
 
 func handleRequest(nickName string, wg *sync.WaitGroup) {
     defer conn.Close()
-    autoRequest(conn, nickName)
+    autoLoginRequest(conn, nickName)
     requests(conn, wg, nickName)
 }
 

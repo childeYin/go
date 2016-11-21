@@ -8,8 +8,7 @@ import(
     // "io"
 )
 
-var ips       = make(map[string]net.Conn)
-var onlineIps = make(map[string]net.Conn)
+var ips = make(map[string]net.Conn)
 
 func handleResponse(conn net.Conn) {
     defer conn.Close()
@@ -27,19 +26,20 @@ func handleResponse(conn net.Conn) {
         sendMsg      := message.msg
         toUserName   := message.to
         fromNickName := message.fromNickName
-        if fromNickName == toUserName {
-            // fmt.Println("自己登录")
-            checkOnLine(message.fromNickName)
-            onlineIps[message.fromNickName] = conn
+        instruction  := message.instruction
+        switch instruction {
+            case "login":
+                checkOnLine(fromNickName)
+                sendOnLineMsg(fromNickName)
+                ips[fromNickName] = conn
+                sendOnLineMsgToUser(conn)
+            case "quit" :
+                quit(fromNickName)
+            case "msg":
+                sendReponse(fromNickName, toUserName, sendMsg, conn)
+            case "search":
+                search(fromNickName, toUserName, conn)
         }
-
-        ips[message.fromNickName] = conn
-        fmt.Println("handleResponse",ips)
-
-      
-
-        
-        sendReponse(fromNickName, toUserName, sendMsg, conn)
     }
 }
 
@@ -66,7 +66,6 @@ func sendReponse(fromNickName string, toUserName string, sendMsg string, fromUse
 
 func handleResponseToSelf(conn net.Conn, wg *sync.WaitGroup){
     defer conn.Close()
-    
     for {
         fmt.Println("handleResponseToSelf")
         newMessage := "消息收到了"
@@ -79,30 +78,28 @@ func handleResponseToSelf(conn net.Conn, wg *sync.WaitGroup){
     }
 }
 
-func checkNet(wg *sync.WaitGroup){
-    defer wg.Done()
-    for {
-        fmt.Println("checkNet", ips)
-        for index, conn := range ips {
-            fmt.Println("checkNet conn",  index, conn)
+func search(fromNickName, toUserName string,  fromUserConn net.Conn) {
+    searchUser := ips[toUserName] 
+    message    := ""
+    if searchUser != nil {
+        message = "【好友搜索】"+toUserName+"在线"
+    } else {
+        message = "【好友搜索】"+toUserName+"不在线"
+    }
+    fromUserConn.Write([]byte(message))
+}
+
+func sendOnLineMsg(loginUserName string){
+    for toUserName, conn := range ips {
+        if toUserName != loginUserName {
+            newMessage := "【上线通知】"+loginUserName + "上线" 
+            conn.Write([]byte(newMessage))
         }
     }
 }
-
-func sendOnLine(wg *sync.WaitGroup){
-    defer wg.Done()
-    for {
-        // fmt.Println("sentOnLine onlineIps", onlineIps)
-        for name, _ := range onlineIps {
-            for toUserName, conn := range ips {
-                if toUserName != name {
-                    newMessage := "【上线通知】"+name + "上线" 
-                    conn.Write([]byte(newMessage))
-                }
-            }
-            delete(onlineIps, name)
-        }
-    }
+func sendOnLineMsgToUser(fromUserConn net.Conn){
+    newMessage := "【上线通知】您已经上线,可以通过【发送信息 msg , 退出登录 quit, 查找好友search】 格式为【关键字;昵称;消息内容】" 
+    fromUserConn.Write([]byte(newMessage))
 }
 
 func checkOnLine(fromNickName string){
@@ -114,6 +111,29 @@ func checkOnLine(fromNickName string){
         userConn.Write([]byte(newMessage))
     }
 }
+
+func sendQuitMsg(logoutUserName string){
+    fmt.Println("sendQuitMsg")
+    for userName, conn := range ips {
+        if userName != logoutUserName {
+            newMessage := "【退出通知】"+logoutUserName + "退出登录" 
+            conn.Write([]byte(newMessage))
+        }
+    }
+}
+
+func quit(fromNickName string){
+    fmt.Println("quit", fromNickName)
+    conn  := ips[fromNickName]
+    defer conn.Close()
+    newMessage := "【下线通知】"+fromNickName+"退出登录"
+    // fmt.Println("del before", ips)
+    delete(ips, fromNickName)
+    // fmt.Println("del after", ips)
+    sendQuitMsg(fromNickName)
+    conn.Write([]byte(newMessage))
+}
+
 
 func listenResponse(listener net.Listener, wg *sync.WaitGroup){
     defer wg.Done()
@@ -136,10 +156,8 @@ func main() {
         fmt.Println("server_error_msg_1:",err)    
     }
     var wg sync.WaitGroup
-    wg.Add(2)
+    wg.Add(1)
     go listenResponse(listener, &wg)
-    // go checkNet(&wg)
-    go sendOnLine(&wg)
     wg.Wait()
 }
 

@@ -170,11 +170,17 @@ func addFriendRequests(email, addUserEmail string, fromUserConn, addUserConn net
 	flag := fileExistsAndWrite(addFriendFileName, "")
 
 	if flag {
-		checkRequest(email, addUserEmail)
-		message := "【添加好友请求】添加"+addUserNickName+"用户为好友的请求已经发送"
-		fromUserConn.Write([]byte(message))
-		message = "【添加好友请求】"+fromUserNickName+"用户,请求添加您为好友,同意请回复【 add;"+email+"】"
-		addUserConn.Write([]byte(message))
+		checkFlag := checkRequest(email, addUserEmail)
+        fmt.Println("addFriendRequests", checkFlag)
+        if (!checkFlag) {
+            message := "【添加好友请求】添加"+addUserNickName+"用户为好友的请求已经发送"
+            fromUserConn.Write([]byte(message))
+            message = "【添加好友请求】"+fromUserNickName+"用户,请求添加您为好友,同意请回复【 add;"+email+"】"
+            addUserConn.Write([]byte(message))
+            return 
+        }
+        message := "【添加好友请求】添加"+addUserNickName+"用户为好友的请求已经发送过，请勿重复发送"
+        fromUserConn.Write([]byte(message))
 		return 
 	}
 	message := "【添加好友】添加好友失败,稍后重试"
@@ -182,14 +188,14 @@ func addFriendRequests(email, addUserEmail string, fromUserConn, addUserConn net
 	return
 }
 
-func checkRequest(email, addUserEmail string){
+func checkRequest(email, addUserEmail string) bool{
 	reqMsg  := email+","+addUserEmail+"\r\n"
 	flag    := checkFileContent(addFriendFileName, reqMsg)
 	fmt.Println("checkRequest", flag)
 	if (!flag) {
-	fmt.Println("checkRequest", flag)
 		fileExistsAndWrite(addFriendFileName, reqMsg)
 	}
+    return flag
 }
 
 func generateFriendFile(email, addUserEmail string) bool{
@@ -242,6 +248,7 @@ func checkFileContent(fileName, msg string) bool{
     for {
         inputString, readerError := inputReader.ReadString('\n')
         inputString = strings.TrimSpace(inputString)
+        msg = strings.TrimSpace(msg)
         if readerError == io.EOF {
 			fmt.Println("checkFileContent end", )
             break
@@ -269,9 +276,7 @@ func fileExistsAndWrite(fileName, msg string) bool{
 	}
 	f, _:= os.OpenFile(fileName, os.O_WRONLY, os.ModeAppend)
 	if msg != "" {
-		fmt.Println(msg)
 		_, err = f.WriteString(msg)
-		fmt.Println(err)
 	}
 	return true
 }

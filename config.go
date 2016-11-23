@@ -9,6 +9,7 @@ type User struct{
 	email string
 	pwd string
 }
+
 var userInfo map[string]User
 
 const (
@@ -18,5 +19,5 @@ const (
 func init(){
 	userInfo = make(map[string]User)
 	userInfo["zhangjun"] = User{"尹少爷", "zhangjun", "123456"}
-	userInfo["shaoye"]   = User{"小少爷", "小少爷", "123456"}
+	userInfo["shaoye"]   = User{"小少爷", "shaoye", "123456"}
 }

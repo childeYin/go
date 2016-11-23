@@ -22,7 +22,6 @@ func login() string {
     reader      = bufio.NewReader(os.Stdin)
     data, _, _  = reader.ReadLine()
     password   := string(data)
-    // nickName   := getUserByAccount(email, password)
     nickName := handleLogin(email, password)
     fmt.Println(nickName)
     if nickName != "" {
@@ -31,7 +30,7 @@ func login() string {
             fmt.Println("服务器繁忙")
             return ""
         }
-        return nickName
+        return email
     } else {
         log.Println("程序终止!")
         return ""
@@ -49,17 +48,16 @@ func handleLogin(email, pwd string) string{
     return ""
 }
 
-func handleRequest(nickName string, wg *sync.WaitGroup) {
+func handleRequest(email string, wg *sync.WaitGroup) {
     defer conn.Close()
-    autoLoginRequest(conn, nickName)
-    requests(conn, wg, nickName)
+    autoLoginRequest(conn, email)
+    requests(conn, wg, email)
 }
 
 func handleResponse(wg *sync.WaitGroup) {
     defer conn.Close()
     responses(conn, wg)
 }
-
 
 func handleMessage(nickName, message string) string{
     if message == "auto" {
@@ -82,13 +80,14 @@ func readConfig(){
     // json.Unmarshal([]byte(string(file)), &jsontype)
     // fmt.Println("jsontype:", jsontype)
 }
+
 func main() {
     runtime.GOMAXPROCS(2)
-    nickName := login()
+    email := login()
     var wg sync.WaitGroup
     wg.Add(2)
-    if nickName != "" {
-        go handleRequest(nickName, &wg)
+    if email != "" {
+        go handleRequest(email, &wg)
         go handleResponse(&wg)
     } else {
        // die()

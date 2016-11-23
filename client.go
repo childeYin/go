@@ -10,13 +10,14 @@ import(
 
 )
 
-func autoLoginRequest(conn net.Conn, nickName string) {
-	// fmt.Println(nickName,"----")
-	message := "login;"+nickName+";欢迎回来"
-	message = combinationMsg(nickName, message)
+func autoLoginRequest(conn net.Conn, email string) {
+	// fmt.Println(email,"----")
+	message := "login;"+email+";欢迎回来"
+	message = combinationMsg(email, message)
 	conn.Write([]byte(message+"\r\n"))
 }
-func requests(conn net.Conn, wg *sync.WaitGroup, nickName string) {
+
+func requests(conn net.Conn, wg *sync.WaitGroup, email string) {
 	defer wg.Done()
 	for {
 		fmt.Println("请输入信息: ")
@@ -24,7 +25,7 @@ func requests(conn net.Conn, wg *sync.WaitGroup, nickName string) {
         data, _, _ := reader.ReadLine()
         message    := string(data)
 
-		message = combinationMsg(nickName, message)
+		message = combinationMsg(email, message)
 		if message == "" {
 			fmt.Println("请按照【接收人;信息】或者【接收人；信息】格式,正确填写:")
 			continue 
@@ -39,8 +40,8 @@ func requests(conn net.Conn, wg *sync.WaitGroup, nickName string) {
 	}
 }
 
-func quit(conn net.Conn, nickName string){
-	message := "【下线通知】"+nickName+" 退出登录"
+func quit(conn net.Conn, email string){
+	message := "【下线通知】"+email+" 退出登录"
 	_, err  := conn.Write([]byte(message+"\r\n"))
 	if err != nil {
 		fmt.Println("退出登录失败:",err)

@@ -5,11 +5,11 @@ import (
 	// "fmt"
 )
 type Msg struct {
-	fromNickName, instruction, to, msg string
+	email, instruction, to, msg string
 }
 
 // var instructionType = "login,quit,msg,search,del,add"
-var instructionType = "login,quit,msg,search"
+var instructionType = "login,quit,msg,search,add"
 
 func parseMsg(msg string) Msg{
 	s := strings.Split(msg, ";")
@@ -25,7 +25,7 @@ func parseMsg(msg string) Msg{
 		case 4:
 			message = Msg{s[0], s[1], s[2], s[3]}
 	}
-	message.fromNickName = strings.TrimSpace(message.fromNickName)
+	message.email        = strings.TrimSpace(message.email)
 	message.instruction  = strings.TrimSpace(message.instruction)
 	message.to 			 = strings.TrimSpace(message.to)
 	message.msg 		 = strings.TrimSpace(message.msg)
@@ -35,19 +35,19 @@ func parseMsg(msg string) Msg{
 	return message
 }
 
-func combinationMsg(nickName string, msg string) string{
+func combinationMsg(email string, msg string) string{
 	newMsg  := strings.Replace(msg, "；", ";", -1)
 	newMsgs := strings.Split(newMsg, ";")
 	length  := len(newMsgs)
 	message := ""
 	switch newMsgs[0] {
-		case "quit", "msg", "search":
-			message = nickName+";"+newMsg;
+		case "quit", "msg", "search", "add":
+			message = email+";"+newMsg;
 		default :
 			if length < 3 {
-				message = nickName+";msg;"+newMsg;
+				message = email+";msg;"+newMsg;
 			} else {
-				message = nickName+";"+newMsg;
+				message = email+";"+newMsg;
 			}
 	}
 	return message

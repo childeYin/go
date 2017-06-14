@@ -9,7 +9,7 @@ type Msg struct {
 }
 
 // var instructionType = "login,quit,msg,search,del,add"
-var instructionType = "login,quit,msg,search,add"
+var instructionType = "login,quit,msg,search,add,all"
 
 func parseMsg(msg string) Msg{
 	s := strings.Split(msg, ";")
@@ -43,6 +43,8 @@ func combinationMsg(email string, msg string) string{
 	switch newMsgs[0] {
 		case "quit", "msg", "search", "add":
 			message = email+";"+newMsg;
+		case "all":
+			message = email+";"+newMsg
 		default :
 			if length < 3 {
 				message = email+";msg;"+newMsg;

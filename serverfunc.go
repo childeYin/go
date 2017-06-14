@@ -7,7 +7,7 @@ import(
     "os"
     "io"
     "strings"
-   "bufio"
+    "bufio"
 )
 const addFriendFileName = "./file/addfriend.log"
 func handleResponse(conn net.Conn) {
@@ -19,7 +19,7 @@ func handleResponse(conn net.Conn) {
         msg, err := conn.Read(buf)
         if err != nil {
             fmt.Println("Error reading:", err)
-            return 
+            return
         }
         message := parseMsg(string(buf[:msg]))
         fmt.Println(message)
@@ -27,6 +27,7 @@ func handleResponse(conn net.Conn) {
         toUserEmail := message.to
         email       := message.email
         instruction := message.instruction
+        fmt.Println("sendMsg=="+sendMsg)
         switch instruction {
             case "login":
                 checkOnLine(email)
@@ -36,7 +37,9 @@ func handleResponse(conn net.Conn) {
             case "quit" :
                 quit(email)
             case "msg":
-                sendReponse(email, toUserEmail, sendMsg, conn)
+                sendResponse(email, toUserEmail, sendMsg, conn)
+            case "all":
+                sendAllResponse(email, sendMsg, conn)
             case "search":
                 search(toUserEmail, conn, "search")
             case "add" :
@@ -44,15 +47,30 @@ func handleResponse(conn net.Conn) {
         }
     }
 }
-
-func sendReponse(email string, toUserName string, sendMsg string, fromUserConn net.Conn){
+func sendAllResponse(email string, sendMsg string, fromUserConn net.Conn){
+    fmt.Println("fromEmail:", email)
+    fromNickName := getFromUserNickName(email)
+    fromConn     := ips[email]
+    for userEmail, conn := range ips {
+        fmt.Printf("userEmail:%s", userEmail)
+        if conn != fromConn {
+            fmt.Println("conn:", conn)
+            newMessage := "【"+fromNickName+"说】: "+ sendMsg+"\r\n"
+            fmt.Println(newMessage)
+            flag, err  := conn.Write([]byte(newMessage))
+            fmt.Println(flag)
+            fmt.Println(err)
+        }
+    }
+}
+func sendResponse(email string, toUserName string, sendMsg string, fromUserConn net.Conn){
     conn  := ips[toUserName]
     fmt.Println("to User conn", conn, toUserName)
     fmt.Println(sendMsg)
     fromNickName := getFromUserNickName(email)
     if conn != nil {
         fmt.Println("conn:", conn)
-        newMessage := "【"+fromNickName+"对你说】: "+ sendMsg+"\r\n" 
+        newMessage := "【"+fromNickName+"对你说】: "+ sendMsg+"\r\n"
         fmt.Println(newMessage)
         flag, err  := conn.Write([]byte(newMessage))
         fmt.Println(flag)
@@ -73,7 +91,7 @@ func getFromUserNickName(email string) string{
     if ok == true {
         return user.nickName
     } else {
-       return ""
+       return "匿名"
     }
 }
 
@@ -110,20 +128,20 @@ func search(toUserName string, fromUserConn net.Conn, flag string) string{
 	    	return ""
 	    }
     }
-    
+
 }
 
 func sendOnLineMsg(loginUserName string){
     for toUserName, conn := range ips {
         if toUserName != loginUserName {
-            newMessage := "【上线通知】"+loginUserName + "上线" 
+            newMessage := "【上线通知】"+loginUserName + "上线"
             conn.Write([]byte(newMessage))
         }
     }
 }
 
 func sendOnLineMsgToUser(fromUserConn net.Conn){
-    newMessage := "【上线通知】您已经上线,可以通过【发送信息 msg , 退出登录 quit, 查找好友search】 格式为【关键字;昵称;消息内容】" 
+    newMessage := "【上线通知】您已经上线,可以通过【发送信息 msg , 退出登录 quit, 查找好友search, 全部发送all】 格式为【关键字;昵称;消息内容】"
     fromUserConn.Write([]byte(newMessage))
 }
 
@@ -142,7 +160,7 @@ func sendQuitMsg(logoutUserEmail, fromNickName string){
     fmt.Println("sendQuitMsg")
     for email, conn := range ips {
         if email != logoutUserEmail {
-            newMessage := "【退出通知】"+ fromNickName + "退出登录" 
+            newMessage := "【退出通知】"+ fromNickName + "退出登录"
             conn.Write([]byte(newMessage))
         }
     }
@@ -163,10 +181,10 @@ func quit(email string){
     }
 }
 func addFriendRequests(email, addUserEmail string, fromUserConn, addUserConn net.Conn){
-	
+
 	addUserNickName  := getFromUserNickName(addUserEmail)
 	fromUserNickName := getFromUserNickName(email)
-	
+
 	flag := fileExistsAndWrite(addFriendFileName, "")
 
 	if flag {
@@ -177,11 +195,11 @@ func addFriendRequests(email, addUserEmail string, fromUserConn, addUserConn net
             fromUserConn.Write([]byte(message))
             message = "【添加好友请求】"+fromUserNickName+"用户,请求添加您为好友,同意请回复【 add;"+email+"】"
             addUserConn.Write([]byte(message))
-            return 
+            return
         }
         message := "【添加好友请求】添加"+addUserNickName+"用户为好友的请求已经发送过，请勿重复发送"
         fromUserConn.Write([]byte(message))
-		return 
+		return
 	}
 	message := "【添加好友】添加好友失败,稍后重试"
 	fromUserConn.Write([]byte(message))
@@ -202,7 +220,7 @@ func generateFriendFile(email, addUserEmail string) bool{
 	fromFileName := "./file/"+email
 	fromMsg 	 := addUserEmail+"\r\n"
 	fromFlag 	 := fileExistsAndWrite(fromFileName, fromMsg)
-	
+
 	addFileName := "./file/"+addUserEmail
 	addMsg := email+"\r\n"
 	addFlag 	:= fileExistsAndWrite(addFileName, addMsg)
@@ -293,7 +311,7 @@ func add(email string, addUserEmail string , fromUserConn net.Conn) {
 	if friendFlag {
 		message := "【添加好友】"+addUserNickName+"用户,已经是您的好友,请勿重复添加"
 		fromUserConn.Write([]byte(message))
-		return 
+		return
 	}
 	flag   := search(addUserEmail, fromUserConn, "add")
 	if flag == "exise" {
@@ -301,14 +319,14 @@ func add(email string, addUserEmail string , fromUserConn net.Conn) {
 			flag := checkResponse(email, addUserEmail, fromUserConn, addUserConn)
 			if !flag {
 				addFriendRequests(email, addUserEmail, fromUserConn, addUserConn)
-				return 
+				return
 			}
 			return
-		} 
+		}
 		message := "【添加好友】添加"+addUserNickName+"用户为好友,该用户不在线,请稍后发送"
 		fromUserConn.Write([]byte(message))
-		return 
-	} 
+		return
+	}
 	message := "【添加好友】未找到"+addUserNickName+"用户"
 	fromUserConn.Write([]byte(message))
 	return

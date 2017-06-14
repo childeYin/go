@@ -22,6 +22,7 @@ func login() string {
     reader      = bufio.NewReader(os.Stdin)
     data, _, _  = reader.ReadLine()
     password   := string(data)
+    fmt.Println("email="+email+"; pwd="+password)
     nickName := handleLogin(email, password)
     fmt.Println(nickName)
     if nickName != "" {
@@ -39,6 +40,8 @@ func login() string {
 
 func handleLogin(email, pwd string) string{
     var user, ok = userInfo[email]
+    fmt.Println(user.nickName)
+    fmt.Println(user.pwd)
     if ok == true {
         if strings.EqualFold(pwd, user.pwd) == true {
             fmt.Println(user.nickName)
@@ -76,7 +79,7 @@ func readConfig(){
     // file, e := ioutil.ReadFile("./config.json")
     // fmt.Printf("%s\n", string(file))
     // fmt.Println("error:", e)
-    // var jsontype 
+    // var jsontype
     // json.Unmarshal([]byte(string(file)), &jsontype)
     // fmt.Println("jsontype:", jsontype)
 }
